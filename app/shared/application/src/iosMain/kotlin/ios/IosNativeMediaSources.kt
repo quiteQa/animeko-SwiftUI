@@ -39,7 +39,7 @@ class IosMediaSourceSubscription internal constructor(
     val id: String,
     val title: String,
     val url: String,
-    val description: String?,
+    val summary: String?,
     val enabled: Boolean,
     val updatedAtMillis: Long,
     val refreshFailed: Boolean,

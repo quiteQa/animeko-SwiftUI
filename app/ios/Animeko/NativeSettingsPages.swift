@@ -309,8 +309,8 @@ private struct NativeMediaSourcesPage: View {
                 set: { sources.setSubscriptionEnabled(id: subscription.id, enabled: $0) }
             ))
             Text(subscription.url).font(.footnote).foregroundStyle(.secondary).textSelection(.enabled)
-            if let description = subscription.description, !description.isEmpty {
-                Text(description).font(.subheadline)
+            if let summary = subscription.summary, !summary.isEmpty {
+                Text(summary).font(.subheadline)
             }
             ForEach(subscription.sources, id: \.id) { source in
                 sourceRow(source, sources: sources, supportsRemoval: false)
