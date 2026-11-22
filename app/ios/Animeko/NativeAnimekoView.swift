@@ -311,13 +311,12 @@ final class NativeScreenHandle<Value> {
 
 @MainActor
 func observeNative<Value>(
-    _ start: (@escaping (Value) -> KotlinUnit) -> IosObservation,
+    _ start: (@escaping (Value) -> Void) -> IosObservation,
     onValue: (Value) -> Void
 ) async {
     let (stream, continuation) = AsyncStream<Value>.makeStream(bufferingPolicy: .bufferingNewest(1))
     let observation = start { value in
         continuation.yield(value)
-        return KotlinUnit()
     }
     defer {
         observation.cancel()

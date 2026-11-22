@@ -337,6 +337,8 @@ private struct NativeQrScanner: View {
 }
 
 private struct NativeQrCamera: UIViewControllerRepresentable {
+    typealias Context = UIViewControllerRepresentableContext<Self>
+
     let onPayload: (String) -> Bool
     let onFailure: () -> Void
 

@@ -132,7 +132,6 @@ private struct NativeManualEpisodePage: View {
                                         failedToPlay = true
                                     }
                                 }
-                                return KotlinUnit()
                             }
                         } label: {
                             HStack {

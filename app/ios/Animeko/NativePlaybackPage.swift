@@ -386,6 +386,8 @@ private struct NativePlaybackSources: View {
 }
 
 private struct NativeVideoSurface: UIViewControllerRepresentable {
+    typealias Context = UIViewControllerRepresentableContext<Self>
+
     let playback: IosNativePlayback
     let fullscreen: Bool
 

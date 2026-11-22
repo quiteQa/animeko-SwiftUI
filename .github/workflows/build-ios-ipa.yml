@@ -100,8 +100,19 @@ jobs:
           xcodebuild -workspace Animeko.xcworkspace -scheme Animeko -configuration Debug \
             -destination 'generic/platform=iOS' -showBuildSettings >/dev/null
 
+      - name: Build the Kotlin framework
+        run: |
+          ./gradlew :app:shared:application:syncFramework \
+            -Pkotlin.native.cocoapods.platform=iphoneos \
+            -Pkotlin.native.cocoapods.archs=arm64 \
+            -Pkotlin.native.cocoapods.configuration=Debug --stacktrace
+          grep -q 'IosNativeCatalog' \
+            app/shared/application/build/cocoapods/framework/application.framework/Headers/application.h
+
       - name: Build device IPA
-        run: ./gradlew :app:ios:buildDebugIpa --stacktrace
+        env:
+          OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED: 'YES'
+        run: ./gradlew :app:ios:buildDebugIpa -x :app:shared:application:linkPodDebugFrameworkIosArm64 --stacktrace
 
       - name: Verify the IPA
         run: |
