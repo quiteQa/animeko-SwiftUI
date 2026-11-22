@@ -101,10 +101,13 @@ jobs:
             -destination 'generic/platform=iOS' -showBuildSettings >/dev/null
 
       - name: Build the Kotlin framework
+        env:
+          ARCHS: arm64
+          PLATFORM_NAME: iphoneos
         run: |
-          ./gradlew :app:shared:application:syncFramework \
-            -Pkotlin.native.cocoapods.platform=iphoneos \
-            -Pkotlin.native.cocoapods.archs=arm64 \
+          ./gradlew :app:shared:application:syncPodComposeResourcesForIos :app:shared:application:syncFramework \
+            "-Pkotlin.native.cocoapods.platform=$PLATFORM_NAME" \
+            "-Pkotlin.native.cocoapods.archs=$ARCHS" \
             -Pkotlin.native.cocoapods.configuration=Debug --stacktrace
           grep -q 'IosNativeCatalog' \
             app/shared/application/build/cocoapods/framework/application.framework/Headers/application.h
