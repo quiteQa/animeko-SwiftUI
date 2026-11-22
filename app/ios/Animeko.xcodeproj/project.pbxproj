@@ -20,7 +20,32 @@
 		E20000000000000000000003 = {isa = PBXBuildFile; fileRef = E10000000000000000000003; };
 		E20000000000000000000004 = {isa = PBXBuildFile; fileRef = E10000000000000000000004; };
 		E20000000000000000000005 = {isa = PBXBuildFile; fileRef = E10000000000000000000005; };
+		E20000000000000000000006 /* NativeAnimekoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000006; };
+		E20000000000000000000007 /* NativeCatalogPages.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000007; };
+		E20000000000000000000008 /* NativeDownloadsPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000008; };
+		E20000000000000000000009 /* NativePlaybackPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000009; };
+		E2000000000000000000000A /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = E1000000000000000000000A; };
+		E2000000000000000000000B /* NativeInterfaceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000000000000000000000B; };
+		E2000000000000000000000D /* NativeAccountPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000000000000000000000D; };
+		E2000000000000000000000E /* NativeNotificationPages.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000000000000000000000E; };
+		E2000000000000000000000F /* NativePlaybackHistoryPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000000000000000000000F; };
+		E20000000000000000000010 /* NativeCommunityPages.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000010; };
+		E20000000000000000000011 /* NativeSettingsPages.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000011; };
+		E20000000000000000000012 /* NativeManualBrowsePage.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000012; };
+		E20000000000000000000013 /* NativeSubjectDownloadsPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000013; };
+		E20000000000000000000014 /* NativeBangumiMergePage.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000014; };
+		E20000000000000000000015 /* NativeMediaSourceEditorPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000015; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		E30000000000000000000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7555FF73242A565900829871 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7555FF7A242A565900829871;
+			remoteInfo = Animeko;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		0A3B5C1D2E3F4A5B6C7D8E93 /* Embed Frameworks */ = {
@@ -53,6 +78,22 @@
 		E10000000000000000000003 = {isa = PBXFileReference; lastKnownFileType = text; name = "Anime4K_Restore_CNN_M.glsl"; path = "../../utils/video-enhancement-shader-provider/src/commonMain/composeResources/files/shaders/Anime4K_Restore_CNN_M.glsl"; sourceTree = SOURCE_ROOT; };
 		E10000000000000000000004 = {isa = PBXFileReference; lastKnownFileType = text; name = "Anime4K_Upscale_CNN_x2_M.glsl"; path = "../../utils/video-enhancement-shader-provider/src/commonMain/composeResources/files/shaders/Anime4K_Upscale_CNN_x2_M.glsl"; sourceTree = SOURCE_ROOT; };
 		E10000000000000000000005 = {isa = PBXFileReference; lastKnownFileType = text; name = "ewa_lanczossharp.frag"; path = "../../utils/video-enhancement-shader-provider/src/commonMain/composeResources/files/shaders/exo-effects/ewa_lanczossharp.frag"; sourceTree = SOURCE_ROOT; };
+		E10000000000000000000006 /* NativeAnimekoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeAnimekoView.swift; sourceTree = "<group>"; };
+		E10000000000000000000007 /* NativeCatalogPages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeCatalogPages.swift; sourceTree = "<group>"; };
+		E10000000000000000000008 /* NativeDownloadsPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeDownloadsPage.swift; sourceTree = "<group>"; };
+		E10000000000000000000009 /* NativePlaybackPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativePlaybackPage.swift; sourceTree = "<group>"; };
+		E1000000000000000000000A /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		E1000000000000000000000B /* NativeInterfaceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeInterfaceTests.swift; sourceTree = "<group>"; };
+		E1000000000000000000000C /* AnimekoNativeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AnimekoNativeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E1000000000000000000000D /* NativeAccountPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeAccountPage.swift; sourceTree = "<group>"; };
+		E1000000000000000000000E /* NativeNotificationPages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeNotificationPages.swift; sourceTree = "<group>"; };
+		E1000000000000000000000F /* NativePlaybackHistoryPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativePlaybackHistoryPage.swift; sourceTree = "<group>"; };
+		E10000000000000000000010 /* NativeCommunityPages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeCommunityPages.swift; sourceTree = "<group>"; };
+		E10000000000000000000011 /* NativeSettingsPages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeSettingsPages.swift; sourceTree = "<group>"; };
+		E10000000000000000000012 /* NativeManualBrowsePage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeManualBrowsePage.swift; sourceTree = "<group>"; };
+		E10000000000000000000013 /* NativeSubjectDownloadsPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeSubjectDownloadsPage.swift; sourceTree = "<group>"; };
+		E10000000000000000000014 /* NativeBangumiMergePage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeBangumiMergePage.swift; sourceTree = "<group>"; };
+		E10000000000000000000015 /* NativeMediaSourceEditorPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeMediaSourceEditorPage.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -95,6 +136,7 @@
 				E10000000000000000000004,
 				E10000000000000000000005,
 				7555FF7D242A565900829871 /* Animeko */,
+				E30000000000000000000002 /* tests */,
 				7555FF7C242A565900829871 /* Products */,
 				6967FD3DE1F113A1DCC2353C /* Frameworks */,
 				8C0969B926C1FC8560DC68FB /* Pods */,
@@ -105,6 +147,7 @@
 			isa = PBXGroup;
 			children = (
 				7555FF7B242A565900829871 /* Animeko.app */,
+				E1000000000000000000000C /* AnimekoNativeUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -116,6 +159,20 @@
 				7555FF82242A565900829871 /* ContentView.swift */,
 				7555FF8C242A565B00829871 /* Info.plist */,
 				2152FB032600AC8F00CF470E /* iOSApp.swift */,
+				E10000000000000000000006 /* NativeAnimekoView.swift */,
+				E10000000000000000000007 /* NativeCatalogPages.swift */,
+				E10000000000000000000008 /* NativeDownloadsPage.swift */,
+				E10000000000000000000009 /* NativePlaybackPage.swift */,
+				E1000000000000000000000D /* NativeAccountPage.swift */,
+				E1000000000000000000000E /* NativeNotificationPages.swift */,
+				E1000000000000000000000F /* NativePlaybackHistoryPage.swift */,
+				E10000000000000000000010 /* NativeCommunityPages.swift */,
+				E10000000000000000000011 /* NativeSettingsPages.swift */,
+				E10000000000000000000012 /* NativeManualBrowsePage.swift */,
+				E10000000000000000000013 /* NativeSubjectDownloadsPage.swift */,
+				E10000000000000000000014 /* NativeBangumiMergePage.swift */,
+				E10000000000000000000015 /* NativeMediaSourceEditorPage.swift */,
+				E1000000000000000000000A /* Localizable.xcstrings */,
 				058557D7273AAEEB004C7B11 /* Preview Content */,
 			);
 			path = Animeko;
@@ -128,6 +185,14 @@
 				F249EC154975837B7E34C6F8 /* Pods-Animeko.release.xcconfig */,
 			);
 			path = Pods;
+			sourceTree = "<group>";
+		};
+		E30000000000000000000002 /* tests */ = {
+			isa = PBXGroup;
+			children = (
+				E1000000000000000000000B /* NativeInterfaceTests.swift */,
+			);
+			path = tests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -154,6 +219,21 @@
 			productReference = 7555FF7B242A565900829871 /* Animeko.app */;
 			productType = "com.apple.product-type.application";
 		};
+		E30000000000000000000003 /* AnimekoNativeUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E30000000000000000000004 /* Build configuration list for AnimekoNativeUITests */;
+			buildPhases = (
+				E30000000000000000000005 /* Sources */,
+			);
+			buildRules = ();
+			dependencies = (
+				E30000000000000000000006 /* PBXTargetDependency */,
+			);
+			name = AnimekoNativeUITests;
+			productName = AnimekoNativeUITests;
+			productReference = E1000000000000000000000C /* AnimekoNativeUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -167,6 +247,9 @@
 					7555FF7A242A565900829871 = {
 						CreatedOnToolsVersion = 11.3.1;
 					};
+					E30000000000000000000003 = {
+						TestTargetID = 7555FF7A242A565900829871;
+					};
 				};
 			};
 			buildConfigurationList = 7555FF76242A565900829871 /* Build configuration list for PBXProject "Animeko" */;
@@ -176,6 +259,9 @@
 			knownRegions = (
 				en,
 				Base,
+				"zh-Hans",
+				"zh-Hant-TW",
+				"zh-Hant-HK",
 			);
 			mainGroup = 7555FF72242A565900829871;
 			productRefGroup = 7555FF7C242A565900829871 /* Products */;
@@ -183,6 +269,7 @@
 			projectRoot = "";
 			targets = (
 				7555FF7A242A565900829871 /* Animeko */,
+				E30000000000000000000003 /* AnimekoNativeUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -198,6 +285,7 @@
 				E20000000000000000000004,
 				E20000000000000000000005,
 				058557BB273AAA24004C7B11 /* Assets.xcassets in Resources */,
+				E2000000000000000000000A /* Localizable.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -271,10 +359,39 @@
 				E20000000000000000000001,
 				2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */,
 				7555FF83242A565900829871 /* ContentView.swift in Sources */,
+				E20000000000000000000006 /* NativeAnimekoView.swift in Sources */,
+				E20000000000000000000007 /* NativeCatalogPages.swift in Sources */,
+				E20000000000000000000008 /* NativeDownloadsPage.swift in Sources */,
+				E20000000000000000000009 /* NativePlaybackPage.swift in Sources */,
+				E2000000000000000000000D /* NativeAccountPage.swift in Sources */,
+				E2000000000000000000000E /* NativeNotificationPages.swift in Sources */,
+				E2000000000000000000000F /* NativePlaybackHistoryPage.swift in Sources */,
+				E20000000000000000000010 /* NativeCommunityPages.swift in Sources */,
+				E20000000000000000000011 /* NativeSettingsPages.swift in Sources */,
+				E20000000000000000000012 /* NativeManualBrowsePage.swift in Sources */,
+				E20000000000000000000013 /* NativeSubjectDownloadsPage.swift in Sources */,
+				E20000000000000000000014 /* NativeBangumiMergePage.swift in Sources */,
+				E20000000000000000000015 /* NativeMediaSourceEditorPage.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E30000000000000000000005 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E2000000000000000000000B /* NativeInterfaceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		E30000000000000000000006 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7555FF7A242A565900829871 /* Animeko */;
+			targetProxy = E30000000000000000000001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		7555FFA3242A565B00829871 /* Debug */ = {
@@ -329,7 +446,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -384,7 +501,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
@@ -405,7 +522,7 @@
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = Animeko/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -428,7 +545,7 @@
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = Animeko/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -437,6 +554,32 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		E30000000000000000000007 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = org.animeko.animeko.native-ui-tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Animeko;
+			};
+			name = Debug;
+		};
+		E30000000000000000000008 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = org.animeko.animeko.native-ui-tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Animeko;
 			};
 			name = Release;
 		};
@@ -460,6 +603,15 @@
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
+		};
+		E30000000000000000000004 /* Build configuration list for AnimekoNativeUITests */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E30000000000000000000007 /* Debug */,
+				E30000000000000000000008 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
 	};

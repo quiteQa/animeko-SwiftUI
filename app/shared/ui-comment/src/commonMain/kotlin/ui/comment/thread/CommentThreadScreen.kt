@@ -95,6 +95,7 @@ import org.koin.core.Koin
 class CommentThreadViewModel(
     val route: NavRoutes.CommentThread,
     koin: Koin = GlobalKoin,
+    snapshot: UIComment? = null,
 ) : AbstractViewModel() {
     private val episodeCommentRepository: EpisodeCommentRepository by koin.inject()
     private val personCommentRepository: PersonCommentRepository by koin.inject()
@@ -110,13 +111,13 @@ class CommentThreadViewModel(
 
     val thread: CommentThreadState = when (val target = route.target) {
         is CommentThreadTarget.Episode ->
-            episodeCommentThreadState(key, target, snapshot = null, episodeCommentRepository, backgroundScope)
+            episodeCommentThreadState(key, target, snapshot, episodeCommentRepository, backgroundScope)
 
         is CommentThreadTarget.Person, is CommentThreadTarget.Character ->
             personCommentThreadState(
                 key,
                 target.toPersonCommentTarget() ?: error("unreachable"),
-                snapshot = null,
+                snapshot = snapshot,
                 personCommentRepository,
                 backgroundScope,
             )

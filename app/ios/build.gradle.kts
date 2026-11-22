@@ -334,6 +334,32 @@ tasks.register("buildDebugForSimulator", Exec::class) {
     commandLine(command)
 }
 
+tasks.register<Exec>("testNativeInterface") {
+    group = "verification"
+    description = "Runs the SwiftUI interface smoke tests on an iPhone simulator"
+    onlyIf("XCUITest requires macOS") { System.getProperty("os.name") == "Mac OS X" }
+    dependsOn(syncMediampFfmpegAppleRuntimeForXcode)
+    val destination = providers.gradleProperty("ani.ios.simulator.destination")
+        .orElse(project.getLocalProperty("ani.ios.simulator.destination").orEmpty())
+        .get()
+    inputs.property("destination", destination)
+    workingDir(projectDir)
+    environment("ORG_GRADLE_PROJECT_compose.ios.resources.platform", "iphonesimulator")
+    environment("ORG_GRADLE_PROJECT_compose.ios.resources.archs", "arm64")
+    commandLine(
+        ipaArguments(
+            scheme = "AnimekoNativeUI",
+            destination = destination,
+            sdk = "iphonesimulator",
+        ) + listOf("-configuration", "Debug", "-parallel-testing-enabled", "NO", "test"),
+    )
+    doFirst {
+        if (destination.isBlank()) {
+            throw GradleException("Set ani.ios.simulator.destination to an iPhone simulator destination.")
+        }
+    }
+}
+
 // ── 启动 iOS 模拟器 ──
 // 通过 macOS 的 open 命令启动 Simulator.app。
 // 如需指定特定设备, 可改用 `xcrun simctl boot "iPhone 15"` 等命令。

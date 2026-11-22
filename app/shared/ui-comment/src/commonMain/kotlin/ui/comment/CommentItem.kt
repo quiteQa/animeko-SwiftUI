@@ -796,7 +796,8 @@ private fun UIRichText.prependAuthorName(name: String): UIRichText {
     return UIRichText(newElements)
 }
 
-internal fun UIRichText.toPlainText(): String = buildString {
+/** Text representation of comment content for copy, report snapshots, and plain-text clients. */
+fun UIRichText.toPlainText(): String = buildString {
     for (element in elements) {
         when (element) {
             is UIRichElement.AnnotatedText -> element.slice.forEach { annotated ->

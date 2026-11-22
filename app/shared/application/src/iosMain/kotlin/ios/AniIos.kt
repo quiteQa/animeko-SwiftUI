@@ -61,6 +61,7 @@ import me.him188.ani.app.navigation.AniNavigator
 import me.him188.ani.app.navigation.BrowserNavigator
 import me.him188.ani.app.navigation.IosBrowserNavigator
 import me.him188.ani.app.navigation.LocalNavigator
+import me.him188.ani.app.navigation.SettingsTab
 import me.him188.ani.app.platform.AniHostingUIViewController
 import me.him188.ani.app.platform.AppStartupTasks
 import me.him188.ani.app.platform.GrantedPermissionManager
@@ -125,6 +126,17 @@ class AniIosApplication(
     val onBackPressedDispatcherOwner: SkikoOnBackPressedDispatcherOwner,
     private val scope: CoroutineScope,
 ) {
+    @Suppress("unused") // used in Swift
+    fun nativeCatalog(): IosNativeCatalog = IosNativeCatalog(context, scope)
+
+    @Suppress("unused") // used in Swift
+    fun openUpdateSettings() {
+        scope.launch(Dispatchers.Main) {
+            if (!aniNavigator.isBackStackReady()) aniNavigator.awaitBackStack()
+            aniNavigator.navigateSettings(SettingsTab.UPDATE)
+        }
+    }
+
     /**
      * 处理打开 App 的 `ani://` 链接. 由 Swift 的 `onOpenURL` 调用.
      *

@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 import UIKit
 import application
@@ -25,21 +26,49 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 @main
 struct iOSApp: App {
 	@UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+	@State private var showsNativeInterface: Bool
+	@State private var qrLoginRequest: String?
 
 	let app: AniIosApplication
+	private let catalog: IosNativeCatalog?
 
 	init() {
 		SwiftBridgeKt.SwiftBridge = SwiftBridgeImpl()
-		app = AniIosKt.startIosApp()
+		let instance = AniIosKt.startIosApp()
+		app = instance
+		#if DEBUG
+		let useNativeInterface = ProcessInfo.processInfo.arguments.contains("-AnimekoNativeUI")
+		catalog = useNativeInterface ? instance.nativeCatalog() : nil
+		_showsNativeInterface = State(initialValue: useNativeInterface)
+		#else
+		catalog = nil
+		_showsNativeInterface = State(initialValue: false)
+		#endif
 	}
 
 	var body: some Scene {
 		WindowGroup {
-			ContentView(app: app)
-				.onOpenURL { url in
-					// ani:// 链接, 例如扫码登录的 ani://qr-login?requestId=...
+			Group {
+				if showsNativeInterface, let catalog {
+					NativeAnimekoView(catalog: catalog, qrLoginRequest: $qrLoginRequest) {
+						showsNativeInterface = false
+					} openUpdateSettings: {
+						showsNativeInterface = false
+						app.openUpdateSettings()
+					}
+				} else {
+					ContentView(app: app)
+				}
+			}
+			.onOpenURL { url in
+				if showsNativeInterface, let catalog {
+					if let requestId = catalog.qrLoginRequestId(content: url.absoluteString) {
+						qrLoginRequest = requestId
+					}
+				} else {
 					_ = app.openUrl(url: url.absoluteString)
 				}
+			}
 		}
 	}
 }
