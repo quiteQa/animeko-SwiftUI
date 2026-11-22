@@ -94,6 +94,12 @@ jobs:
           ./gradlew :app:shared:application:generateDummyFramework :app:ios:podInstall \
             :app:shared:application:podInstallSyntheticIos --stacktrace
 
+      - name: Check the shared archive scheme
+        working-directory: app/ios
+        run: |
+          xcodebuild -workspace Animeko.xcworkspace -scheme Animeko -configuration Debug \
+            -destination 'generic/platform=iOS' -showBuildSettings >/dev/null
+
       - name: Build device IPA
         run: ./gradlew :app:ios:buildDebugIpa --stacktrace
 
