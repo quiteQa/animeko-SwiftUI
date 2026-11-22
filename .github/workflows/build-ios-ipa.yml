@@ -86,6 +86,9 @@ jobs:
           cache-provider: basic
           cache-read-only: false
 
+      - name: Check ONNX Runtime CocoaPods source
+        run: bash app/ios/scripts/prepare_ci_onnx_pods.sh
+
       - name: Prepare the CocoaPods workspace
         run: ./gradlew :app:shared:application:generateDummyFramework :app:ios:podInstall --stacktrace
 

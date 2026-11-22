@@ -37,6 +37,8 @@
 
 工作流默认使用 GitHub 托管的 Apple Silicon macOS 26 runner 和 Xcode 26.4.1。使用自托管 Apple Silicon runner 时，可通过仓库变量 `IOS_IPA_RUNNER` 和 `IOS_IPA_DEVELOPER_DIR` 指定其标签和 Xcode Developer 目录。
 
+ONNX Runtime 1.22.0 的 CocoaPods 下载源不可用时，工作流使用经过 SHA-256 校验的 Microsoft NuGet iOS Framework，以及该发行包记录的 Objective-C 源码提交。
+
 ## 分层应用图标
 
 `IconComposer/` 下的图标源文件提供 1024 × 1024 画布上的蓝色外圈、白色内圆和「あ」字标。Icon Composer 的背景填充使用 `#2F3943`，图层按文件编号从底到顶排列。Xcode 使用 `.icon` 文件生成各外观和尺寸的图标。[Apple Icon Composer 文档](https://developer.apple.com/documentation/Xcode/creating-your-app-icon-using-icon-composer)

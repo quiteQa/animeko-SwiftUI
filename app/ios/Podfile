@@ -1,5 +1,10 @@
 require_relative 'scripts/sentry_terminate_patch'
 
+if (onnx_specs = ENV['ANIMEKO_IOS_ONNX_SPEC_REPO'])
+  source onnx_specs
+  source 'https://cdn.cocoapods.org/'
+end
+
 target 'Animeko' do
   use_frameworks!
   platform :ios, '26.0'
