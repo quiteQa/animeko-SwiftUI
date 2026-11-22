@@ -31,6 +31,12 @@
 ./gradlew :app:ios:testNativeInterface '-Pani.ios.simulator.destination=platform=iOS Simulator,id=<UDID>'
 ```
 
+## 自动构建 IPA
+
+向 `main` 或 `codex/ios-liquid-glass` 推送代码会触发 `Build iOS IPA` 工作流。构建成功后，在对应 Actions 运行的 Artifacts 中下载 `Animeko-LiquidGlass.ipa`。这是默认打开 SwiftUI 界面的 Debug 预览包，安装时需要通过侧载工具重新签名。产物保留 14 天。
+
+工作流默认使用 GitHub 托管的 Apple Silicon macOS 26 runner 和 Xcode 26.4.1。使用自托管 Apple Silicon runner 时，可通过仓库变量 `IOS_IPA_RUNNER` 和 `IOS_IPA_DEVELOPER_DIR` 指定其标签和 Xcode Developer 目录。
+
 ## 分层应用图标
 
 `IconComposer/` 下的图标源文件提供 1024 × 1024 画布上的蓝色外圈、白色内圆和「あ」字标。Icon Composer 的背景填充使用 `#2F3943`，图层按文件编号从底到顶排列。Xcode 使用 `.icon` 文件生成各外观和尺寸的图标。[Apple Icon Composer 文档](https://developer.apple.com/documentation/Xcode/creating-your-app-icon-using-icon-composer)

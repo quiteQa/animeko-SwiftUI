@@ -189,6 +189,9 @@ val buildDebugArchive = tasks.register("buildDebugArchive", XcodeArchiveTask::cl
     destination = "generic/platform=iOS"
     sdk = "iphoneos"
     archiveConfiguration = "Debug"
+    if (project.getPropertyOrNull("ani.ios.native.preview") == "true") {
+        buildSettings.put("SWIFT_ACTIVE_COMPILATION_CONDITIONS", "\$(inherited) DEBUG ANIMEKO_NATIVE_UI_PREVIEW")
+    }
     codeSigningAllowed = false
     codeSigningRequired = false
     archivePath = layout.buildDirectory.dir("archives/debug/Animeko.xcarchive")

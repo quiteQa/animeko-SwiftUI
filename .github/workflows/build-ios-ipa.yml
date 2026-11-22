@@ -1,0 +1,111 @@
+name: Build iOS IPA
+
+on:
+  push:
+    branches:
+      - main
+      - codex/ios-liquid-glass
+    paths-ignore:
+      - '**/*.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: ios-ipa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build Liquid Glass preview
+    runs-on: ${{ vars.IOS_IPA_RUNNER || 'macos-26' }}
+    timeout-minutes: 90
+    env:
+      DEVELOPER_DIR: ${{ vars.IOS_IPA_DEVELOPER_DIR || '/Applications/Xcode_26.4.1.app/Contents/Developer' }}
+      JBR_ARCHIVE: jbrsdk_jcef-21.0.11-osx-aarch64-b1163.116.tar.gz
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Check Apple build tools
+        run: |
+          test "$(uname -m)" = arm64
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+          pod --version
+
+      - name: Install JetBrains Runtime 21
+        run: |
+          jbr_url="https://cache-redirector.jetbrains.com/intellij-jbr/$JBR_ARCHIVE"
+          cd "$RUNNER_TEMP"
+          curl --fail --location --retry 3 --output "$JBR_ARCHIVE" "$jbr_url"
+          curl --fail --location --retry 3 --output "$JBR_ARCHIVE.checksum" "$jbr_url.checksum"
+          checksum="$(awk 'NR == 1 { print $1 }' "$JBR_ARCHIVE.checksum")"
+          [[ "$checksum" =~ ^[[:xdigit:]]{128}$ ]]
+          printf '%s  %s\n' "$checksum" "$JBR_ARCHIVE" | shasum -a 512 -c -
+          mkdir -p "$RUNNER_TEMP/animeko-jbr"
+          tar -xzf "$JBR_ARCHIVE" -C "$RUNNER_TEMP/animeko-jbr"
+          javac_path="$(find "$RUNNER_TEMP/animeko-jbr" -path '*/Contents/Home/bin/javac' -print -quit)"
+          test -x "$javac_path"
+          java_home="${javac_path%/bin/javac}"
+          "$java_home/bin/java" -version
+          printf 'JAVA_HOME=%s\n' "$java_home" >> "$GITHUB_ENV"
+          printf '%s/bin\n' "$java_home" >> "$GITHUB_PATH"
+
+      - name: Configure Gradle for iOS
+        run: |
+          cat > local.properties <<'EOF'
+          ani.enable.ios=true
+          ani.build.framework=true
+          ani.ios.native.preview=true
+          EOF
+          gradle_home="$RUNNER_TEMP/animeko-ipa-gradle"
+          mkdir -p "$gradle_home"
+          printf 'GRADLE_USER_HOME=%s\n' "$gradle_home" >> "$GITHUB_ENV"
+          memory_gib=$(( $(sysctl -n hw.memsize) / 1073741824 ))
+          heap_gib=$((memory_gib - 2))
+          if (( heap_gib > 12 )); then
+            heap_gib=12
+          fi
+          cat > "$gradle_home/gradle.properties" <<EOF
+          org.gradle.jvmargs=-Xmx${heap_gib}g -Dfile.encoding=UTF-8
+          org.gradle.parallel=false
+          org.gradle.workers.max=1
+          kotlin.compiler.execution.strategy=in-process
+          EOF
+
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic
+          cache-read-only: false
+
+      - name: Prepare the CocoaPods workspace
+        run: ./gradlew :app:shared:application:generateDummyFramework :app:ios:podInstall --stacktrace
+
+      - name: Build device IPA
+        run: ./gradlew :app:ios:buildDebugIpa --stacktrace
+
+      - name: Verify the IPA
+        run: |
+          ipa=app/ios/build/archives/debug/Animeko.ipa
+          unzip -tq "$ipa"
+          unzip -Z1 "$ipa" > "$RUNNER_TEMP/animeko-ipa-files.txt"
+          grep -Fxq 'Payload/Animeko.app/Animeko' "$RUNNER_TEMP/animeko-ipa-files.txt"
+          grep -Fxq 'Payload/Animeko.app/Info.plist' "$RUNNER_TEMP/animeko-ipa-files.txt"
+          mkdir -p "$RUNNER_TEMP/animeko-ipa"
+          cp "$ipa" "$RUNNER_TEMP/animeko-ipa/Animeko-LiquidGlass.ipa"
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v7
+        with:
+          path: ${{ runner.temp }}/animeko-ipa/Animeko-LiquidGlass.ipa
+          archive: false
+          retention-days: 14
+          if-no-files-found: error

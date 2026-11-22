@@ -37,7 +37,11 @@ struct iOSApp: App {
 		let instance = AniIosKt.startIosApp()
 		app = instance
 		#if DEBUG
+		#if ANIMEKO_NATIVE_UI_PREVIEW
+		let useNativeInterface = true
+		#else
 		let useNativeInterface = ProcessInfo.processInfo.arguments.contains("-AnimekoNativeUI")
+		#endif
 		catalog = useNativeInterface ? instance.nativeCatalog() : nil
 		_showsNativeInterface = State(initialValue: useNativeInterface)
 		#else

@@ -11,6 +11,7 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Input
@@ -235,6 +236,10 @@ abstract class XcodeArchiveTask : DefaultTask() {
     @get:Input
     abstract val archiveConfiguration: Property<String>
 
+    @get:Input
+    @get:Optional
+    abstract val buildSettings: MapProperty<String, String>
+
     /** 是否允许代码签名 */
     @get:Input
     abstract val codeSigningAllowed: Property<Boolean>
@@ -277,8 +282,8 @@ abstract class XcodeArchiveTask : DefaultTask() {
 
     @TaskAction
     fun buildArchive() {
-        // ── 步骤 1: 收集签名相关的 Xcode build settings ──
-        val additionalBuildSettings = mutableMapOf<String, String>()
+        // ── 步骤 1: 收集 Xcode build settings ──
+        val additionalBuildSettings = buildSettings.getOrElse(emptyMap()).toMutableMap()
         // 设置签名方式 (Automatic / Manual)
         codeSignStyle.orNull?.takeIf { it.isNotBlank() }?.let {
             additionalBuildSettings["CODE_SIGN_STYLE"] = it

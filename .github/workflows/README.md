@@ -6,6 +6,8 @@
 
 `datasource-test-mcp.yml` 直接维护，构建自带 JBR 的 `tools/datasource-test-mcp` Windows 发行包，不依赖仓库环境即可运行，用法见该工具的 README。
 
+`build-ios-ipa.yml` 直接维护，构建可供侧载的 iOS Liquid Glass Debug 预览 IPA。触发条件和产物见 [iOS 构建说明](../../app/ios/README.md#自动构建-ipa)。
+
 `codex-agent.yml` 直接维护。新 issue 的分类器会读取组织级 `Priority` 字段的选项，校验模型输出后填写空缺的优先级，保留已有值。P0–P3 labels 已过时，不参与分类。
 
 `OPENANI_BOT_TOKEN` 需要仓库 Issues 写权限和组织 Issue Fields 读权限（classic PAT 对应 `repo` 和 `read:org`）。机器人必须是组织成员，才能读取仅成员可见的 Priority 字段。
