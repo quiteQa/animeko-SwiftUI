@@ -487,6 +487,7 @@ private fun SubjectPreviewItemInfo.toCard(rank: Int = 0): IosSubjectCard? {
 enum class IosAppearance { SYSTEM, LIGHT, DARK }
 enum class IosInitialTab { EXPLORE, COLLECTION, DOWNLOADS }
 
+@ConsistentCopyVisibility
 data class IosNativePreferences internal constructor(
     val appearance: IosAppearance,
     val initialTab: IosInitialTab,

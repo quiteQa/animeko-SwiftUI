@@ -35,6 +35,7 @@ import me.him188.ani.app.ui.notification.NotificationOpenTarget
 import me.him188.ani.app.ui.notification.ReadOverlay
 import me.him188.ani.app.ui.notification.ReportResultAction
 import me.him188.ani.app.ui.notification.commentReplyDestination
+import me.him188.ani.app.ui.notification.isRead
 import me.him188.ani.app.ui.notification.labelRes
 import me.him188.ani.app.ui.notification.notificationInlineActions
 import me.him188.ani.app.ui.notification.notificationOpenTarget
@@ -45,6 +46,7 @@ import me.him188.ani.app.ui.notification.reportTargetText
 import me.him188.ani.app.ui.notification.resolveString
 import org.jetbrains.compose.resources.getString
 
+@ConsistentCopyVisibility
 data class IosNotificationBadge internal constructor(val hasUnread: Boolean)
 
 enum class IosNoticeDestinationKind {
@@ -395,6 +397,7 @@ private fun Announcement.toRow(unread: Boolean) =
 
 enum class IosNotificationPreference { ANNOUNCEMENT_BADGE, COMMENT_REPLIES, REPORT_RESULTS, ACCOUNT_SECURITY }
 
+@ConsistentCopyVisibility
 data class IosNotificationPreferences internal constructor(
     val announcementBadge: Boolean,
     val commentReplies: Boolean,
