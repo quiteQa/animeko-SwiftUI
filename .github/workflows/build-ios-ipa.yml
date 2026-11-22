@@ -90,7 +90,9 @@ jobs:
         run: bash app/ios/scripts/prepare_ci_onnx_pods.sh
 
       - name: Prepare the CocoaPods workspace
-        run: ./gradlew :app:shared:application:generateDummyFramework :app:ios:podInstall --stacktrace
+        run: |
+          ./gradlew :app:shared:application:generateDummyFramework :app:ios:podInstall \
+            :app:shared:application:podInstallSyntheticIos --stacktrace
 
       - name: Build device IPA
         run: ./gradlew :app:ios:buildDebugIpa --stacktrace

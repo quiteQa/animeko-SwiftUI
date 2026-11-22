@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.plugin.cocoapods.CocoapodsExtension
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.TestExecutable
+import org.jetbrains.kotlin.gradle.targets.native.tasks.PodGenTask
 
 plugins {
     id("ani.kmp-compose")
@@ -45,14 +46,19 @@ kotlin {
 
 kotlin {
     if (enableIos && buildIosFramework && getOs() == Os.MacOS) {
-        // Sentry requires cocoapods for its dependencies
-        extensions.configure<CocoapodsExtension> {
-            providers.environmentVariable("ANIMEKO_IOS_ONNX_SPEC_REPO").orNull?.let { onnxSpecs ->
-                specRepos {
-                    url(onnxSpecs)
-                    url("https://cdn.cocoapods.org/")
+        providers.environmentVariable("ANIMEKO_IOS_ONNX_SPEC_REPO").orNull?.let { onnxSpecs ->
+            tasks.withType<PodGenTask>().configureEach {
+                val generatedPodfile = podfile
+                inputs.property("onnxSpecRepo", onnxSpecs)
+                doLast {
+                    // CocoaPods resolves each pod using the first source that contains it.
+                    val file = generatedPodfile.get()
+                    file.writeText("source ENV.fetch('ANIMEKO_IOS_ONNX_SPEC_REPO')\n" + file.readText())
                 }
             }
+        }
+        // Sentry requires cocoapods for its dependencies
+        extensions.configure<CocoapodsExtension> {
             // https://kotlinlang.org/docs/native-cocoapods.html#configure-existing-project
             framework {
                 baseName = "application"
