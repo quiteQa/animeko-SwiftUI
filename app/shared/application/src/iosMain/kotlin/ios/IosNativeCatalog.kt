@@ -549,7 +549,7 @@ class IosNativeCatalog internal constructor(private val context: IosContext, pri
 
     fun openPlayback(subjectId: Int, episodeId: Int): IosNativePlayback? {
         if (!EpisodeNavigationGuardRegistry.checkOrNotifyDenied(subjectId, episodeId)) return null
-        return IosNativePlayback(subjectId, episodeId, context, koin.get())
+        return IosNativePlayback(subjectId, episodeId, context, koin.get(), settings)
     }
 
     fun observePreferences(onValue: (IosNativePreferences) -> Unit): IosObservation =

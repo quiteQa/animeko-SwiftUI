@@ -51,6 +51,7 @@ data class EpisodePresentation(
      */
     val isKnownBroadcast: Boolean,
     val isPlaceholder: Boolean = false,
+    val imageMedium: String? = null,
 ) {
     companion object {
         @Stable
@@ -76,4 +77,5 @@ fun EpisodeCollectionInfo.toPresentation(
     sort = episodeInfo.sort.toString(),
     collectionType = collectionType,
     isKnownBroadcast = episodeInfo.isKnownCompleted(recurrence),
+    imageMedium = episodeInfo.imageMedium,
 )

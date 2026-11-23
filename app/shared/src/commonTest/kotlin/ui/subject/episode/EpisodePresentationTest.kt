@@ -35,4 +35,14 @@ class EpisodePresentationTest {
         assertEquals("孤独摇滚！", presentation.title)
         assertEquals("孤独摇滚！", presentation.originalTitle)
     }
+
+    @Test
+    fun `episode presentation keeps the still image`() {
+        val original = episode("Episode title", "")
+        val image = "https://static.example/episode.jpg"
+        val withImage = original.copy(episodeInfo = original.episodeInfo.copy(imageMedium = image))
+
+        assertEquals(image, withImage.toPresentation(recurrence = null).imageMedium)
+        assertEquals(null, original.toPresentation(recurrence = null).imageMedium)
+    }
 }

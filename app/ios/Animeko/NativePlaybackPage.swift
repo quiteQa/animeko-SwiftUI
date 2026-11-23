@@ -10,11 +10,11 @@ struct NativePlaybackPage: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var handle: NativeScreenHandle<IosNativePlayback>?
     @State private var state: IosPlaybackState?
+    @State private var episodes: [IosPlaybackEpisode]?
     @State private var speed: IosPlaybackSpeed?
     @State private var options: IosPlaybackOptions?
     @State private var fullscreen = false
     @State private var showSources = false
-    @State private var showComments = false
     @State private var showEpisodes = false
     @State private var showPlaybackOptions = false
     @State private var denied = false
@@ -26,43 +26,21 @@ struct NativePlaybackPage: View {
                     VStack(alignment: .leading, spacing: 0) {
                         video(playback)
                             .frame(height: fullscreen ? geometry.size.height : min(geometry.size.width * 9 / 16, geometry.size.height))
-                        if !fullscreen {
-                            ScrollView {
-                                VStack(alignment: .leading, spacing: 16) {
-                                    if let state, !state.episodeTitle.isEmpty {
-                                        Text(state.episodeTitle).font(.title2.bold())
-                                            .accessibilityAddTraits(.isHeader)
-                                        Text(state.subjectTitle).foregroundStyle(.secondary)
-                                    }
-                                    Button("Playback Sources", systemImage: "arrow.triangle.branch") { showSources = true }
-                                        .buttonStyle(.glass)
-                                    if state != nil {
-                                        Button("Choose Episode", systemImage: "list.number") { showEpisodes = true }
-                                            .buttonStyle(.glass)
-                                        Button("Comments", systemImage: "bubble.left.and.bubble.right") { showComments = true }
-                                            .buttonStyle(.glass)
-                                    }
-                                }
-                                .padding()
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            }
-                        }
+                        playbackDetails(playback)
+                            .frame(height: fullscreen ? 0 : nil)
+                            .clipped()
+                            .allowsHitTesting(!fullscreen)
+                            .accessibilityHidden(fullscreen)
                     }
                 }
                 .ignoresSafeArea(.container, edges: fullscreen ? .all : [])
                 .sheet(isPresented: $showSources) { NativePlaybackSources(playback: playback) }
-                .sheet(isPresented: $showEpisodes) { NativePlaybackEpisodes(playback: playback) }
+                .sheet(isPresented: $showEpisodes) {
+                    NativePlaybackEpisodes(episodes: episodes, select: playback.selectEpisode)
+                }
                 .sheet(isPresented: $showPlaybackOptions) { NativePlaybackOptionsSheet(playback: playback, options: $options) }
-                .sheet(isPresented: $showComments) {
-                    let currentEpisode = state?.episodeId ?? episodeId
-                    NativeCommentsSheet(catalog: catalog, location: .episode(subjectId, currentEpisode)) {
-                        playback.openComments(episodeId: currentEpisode)
-                    }
-                }
-                .onChange(of: state?.episodeId) { previous, current in
-                    if previous != nil && previous != current { showComments = false }
-                }
                 .onChange(of: fullscreen) { _, value in playback.setFullscreen(fullscreen: value) }
+                .task { await observeNative(playback.observeEpisodes) { episodes = $0 } }
                 .task { await observeNative(playback.observeSpeed) { speed = $0 } }
                 .task { await observeNative(playback.observeOptions) { options = $0 } }
                 .onChange(of: scenePhase) { _, phase in
@@ -94,6 +72,84 @@ struct NativePlaybackPage: View {
             if let current = handle {
                 await observeNative(current.value.observe) { state = $0 }
             }
+        }
+    }
+
+    private func playbackDetails(_ playback: IosNativePlayback) -> some View {
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 5) {
+                        if let state, !state.subjectTitle.isEmpty {
+                            Text(state.subjectTitle).font(.subheadline).foregroundStyle(.secondary)
+                        }
+                        Text(state?.episodeTitle.nonEmpty ?? String(localized: "Playback"))
+                            .font(.title2.bold())
+                            .accessibilityAddTraits(.isHeader)
+                    }
+                    Button("Playback Sources", systemImage: "arrow.triangle.branch") { showSources = true }
+                        .buttonStyle(.glass)
+
+                    Divider()
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            Text("Episodes").font(.headline).accessibilityAddTraits(.isHeader)
+                            Spacer()
+                            if episodes?.isEmpty == false {
+                                Button("Choose Episode", systemImage: "square.grid.2x2") { showEpisodes = true }
+                                    .font(.subheadline)
+                                    .buttonStyle(.glass)
+                            }
+                        }
+                        episodeStrip(playback)
+                    }
+
+                    Divider()
+                    if let state, !state.episodeNumber.isEmpty {
+                        NativeCommentsContent(
+                            catalog: catalog,
+                            location: .episode(subjectId, state.episodeId),
+                            open: { playback.openComments(episodeId: state.episodeId) },
+                            inlineScroll: proxy
+                        )
+                        .id(state.episodeId)
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 18)
+                .frame(maxWidth: 760)
+                .frame(maxWidth: .infinity)
+            }
+            .scrollDismissesKeyboard(.interactively)
+        }
+    }
+
+    private func episodeStrip(_ playback: IosNativePlayback) -> some View {
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal) {
+                LazyHStack(alignment: .top, spacing: 10) {
+                    ForEach(episodes ?? [], id: \.id) { episode in
+                        NativePlaybackEpisodeCard(episode: episode) {
+                            playback.selectEpisode(id: episode.id)
+                        }
+                        .frame(width: 146)
+                        .id(episode.id)
+                    }
+                }
+                .padding(.vertical, 2)
+            }
+            .scrollIndicators(.hidden)
+            .onChange(of: episodes?.first(where: \.selected)?.id, initial: true) { _, id in
+                if let id { proxy.scrollTo(id, anchor: .center) }
+            }
+            .overlay(alignment: .leading) {
+                if episodes == nil {
+                    ProgressView()
+                } else if episodes?.isEmpty == true {
+                    Label("No Episodes", systemImage: "list.number").font(.subheadline).foregroundStyle(.secondary)
+                }
+            }
+            .frame(minHeight: episodes?.isEmpty != false ? 34 : nil)
         }
     }
 
@@ -244,40 +300,30 @@ private struct NativePlaybackOptionsSheet: View {
 }
 
 private struct NativePlaybackEpisodes: View {
-    let playback: IosNativePlayback
+    let episodes: [IosPlaybackEpisode]?
+    let select: (Int32) -> Void
     @Environment(\.dismiss) private var dismiss
-    @State private var episodes: [IosPlaybackEpisode]?
 
     var body: some View {
         NavigationStack {
             ScrollViewReader { proxy in
-                List {
+                ScrollView {
                     if let episodes {
                         if episodes.isEmpty {
                             ContentUnavailableView("No Episodes", systemImage: "list.number")
                         }
-                        ForEach(episodes, id: \.id) { episode in
-                            Button {
-                                playback.selectEpisode(id: episode.id)
-                                dismiss()
-                            } label: {
-                                HStack(spacing: 12) {
-                                    Text(episode.number).font(.subheadline.monospacedDigit()).foregroundStyle(.secondary)
-                                    Text(episode.title)
-                                    Spacer()
-                                    if episode.selected {
-                                        Image(systemName: "play.fill").accessibilityLabel("Now Playing")
-                                    } else if episode.watched {
-                                        Image(systemName: "checkmark.circle").accessibilityLabel("Watched")
-                                    }
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 12)], spacing: 12) {
+                            ForEach(episodes, id: \.id) { episode in
+                                NativePlaybackEpisodeCard(episode: episode) {
+                                    select(episode.id)
+                                    dismiss()
                                 }
+                                .id(episode.id)
                             }
-                            .disabled(!episode.published || episode.selected)
-                            .accessibilityAddTraits(episode.selected ? .isSelected : [])
-                            .id(episode.id)
                         }
+                        .padding()
                     } else {
-                        ProgressView()
+                        ProgressView().padding()
                     }
                 }
                 .onChange(of: episodes?.first(where: \.selected)?.id, initial: true) { _, id in
@@ -293,7 +339,62 @@ private struct NativePlaybackEpisodes: View {
             }
         }
         .presentationDetents([.medium, .large])
-        .task { await observeNative(playback.observeEpisodes) { episodes = $0 } }
+    }
+}
+
+private struct NativePlaybackEpisodeCard: View {
+    let episode: IosPlaybackEpisode
+    let select: () -> Void
+
+    var body: some View {
+        let shape = RoundedRectangle(cornerRadius: 14)
+        Button(action: select) {
+            VStack(alignment: .leading, spacing: 0) {
+                Color.secondary.opacity(0.12)
+                    .aspectRatio(16.0 / 9.0, contentMode: .fit)
+                    .overlay {
+                        AsyncImage(url: episode.imageUrl.flatMap { URL(string: $0) }) { phase in
+                            if let image = phase.image {
+                                image.resizable().scaledToFill()
+                            } else {
+                                Image(systemName: "film").font(.title3).foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                    .clipped()
+                    .accessibilityHidden(true)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 4) {
+                        Text(episode.number).font(.caption.monospacedDigit().weight(.semibold))
+                        Spacer(minLength: 0)
+                        if episode.selected {
+                            Image(systemName: "play.fill").accessibilityLabel("Now Playing")
+                        } else if episode.watched {
+                            Image(systemName: "checkmark.circle.fill").accessibilityLabel("Watched")
+                        } else if !episode.published {
+                            Image(systemName: "clock").accessibilityLabel("Episode Unavailable")
+                        }
+                    }
+                    .font(.caption)
+                    .foregroundStyle(episode.selected ? Color.accentColor : Color.secondary)
+                    Text(episode.title.nonEmpty ?? episode.number)
+                        .font(.subheadline.weight(.medium))
+                        .lineLimit(2, reservesSpace: true)
+                        .multilineTextAlignment(.leading)
+                }
+                .padding(10)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(episode.selected ? Color.accentColor.opacity(0.12) : Color(uiColor: .secondarySystemBackground))
+            .clipShape(shape)
+            .overlay { shape.strokeBorder(episode.selected ? Color.accentColor : Color.secondary.opacity(0.18)) }
+            .contentShape(shape)
+        }
+        .buttonStyle(.plain)
+        .disabled(!episode.published || episode.selected)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(episode.selected ? .isSelected : [])
     }
 }
 

@@ -188,6 +188,7 @@ struct NativeCommentThreadPage: View {
     let commentId: String
     let replyId: String?
     var openEmbeddedThread: (() -> IosNativeCommentThread?)? = nil
+    var inlineScroll: ScrollViewProxy? = nil
 
     @State private var handle: NativeScreenHandle<IosNativeCommentThread>?
     @State private var state: IosCommentThreadState?
@@ -199,6 +200,45 @@ struct NativeCommentThreadPage: View {
     @FocusState private var replyFocused: Bool
 
     var body: some View {
+        Group {
+            if let inlineScroll {
+                VStack(alignment: .leading, spacing: 12) {
+                    if let state, let root = state.root {
+                        if state.status == .failed {
+                            Button("Try Again") { handle?.value.refresh() }
+                        }
+                        row(root, canReply: state.canReply)
+                        Divider()
+                        Text("Replies").font(.subheadline.bold()).accessibilityAddTraits(.isHeader)
+                        replies(state)
+                    } else {
+                        unavailableContent
+                    }
+                    if state?.canReply == true { composer }
+                }
+                .onChange(of: state?.replies.last?.stableId) { _, last in
+                    scrollToSentReply(last, using: inlineScroll)
+                }
+            } else {
+                threadList
+            }
+        }
+        .sheet(item: $report) { value in
+            NativeCommentReportSheet(author: value.author) { reason, detail in
+                handle?.value.report(id: value.id, reason: reason, detail: detail)
+                report = nil
+            }
+        }
+        .alert(actionTitle, isPresented: Binding(
+            get: { [.reported, .reportFailed, .sendFailed, .voteFailed].contains(state?.action ?? .idle) },
+            set: { if !$0 { handle?.value.dismissAction() } }
+        )) {
+            Button("OK", role: .cancel) { handle?.value.dismissAction() }
+        }
+        .task { await observeThread() }
+    }
+
+    private var threadList: some View {
         ScrollViewReader { proxy in
             List {
                 if let state, let root = state.root {
@@ -210,32 +250,9 @@ struct NativeCommentThreadPage: View {
                     } header: {
                         if let subtitle = state.subtitle { Text(subtitle) }
                     }
-                    Section("Replies") {
-                        ForEach(state.replies, id: \.stableId) { reply in
-                            row(reply, canReply: state.canReply)
-                                .listRowBackground(highlightedReply == reply.stableId ? Color.accentColor.opacity(0.12) : Color.clear)
-                                .id(reply.stableId)
-                        }
-                        if state.replies.isEmpty {
-                            NativeActivityFeedback(
-                                status: state.repliesStatus, emptyTitle: "No Replies",
-                                retry: { handle?.value.retryReplies() }
-                            )
-                        } else {
-                            NativeActivityPagination(
-                                canLoadMore: state.canLoadMore,
-                                failed: state.appendFailed,
-                                loadMore: { handle?.value.loadMore() },
-                                retry: { handle?.value.retryReplies() }
-                            )
-                        }
-                    }
+                    Section("Replies") { replies(state) }
                 } else {
-                    NativeActivityFeedback(
-                        status: unavailable ? .idle : state?.status,
-                        emptyTitle: "Comment Unavailable",
-                        retry: { handle?.value.refresh() }
-                    )
+                    unavailableContent
                 }
             }
             .refreshable { handle?.value.refresh() }
@@ -250,10 +267,7 @@ struct NativeCommentThreadPage: View {
                 }
             }
             .onChange(of: state?.replies.last?.stableId) { _, last in
-                if scrollAfterSending, let last {
-                    scrollAfterSending = false
-                    proxy.scrollTo(last, anchor: .bottom)
-                }
+                scrollToSentReply(last, using: proxy)
             }
         }
         .safeAreaInset(edge: .bottom) {
@@ -270,54 +284,80 @@ struct NativeCommentThreadPage: View {
                 }
             }
         }
-        .sheet(item: $report) { value in
-            NativeCommentReportSheet(author: value.author) { reason, detail in
-                handle?.value.report(id: value.id, reason: reason, detail: detail)
-                report = nil
-            }
+    }
+
+    @ViewBuilder
+    private func replies(_ state: IosCommentThreadState) -> some View {
+        ForEach(state.replies, id: \.stableId) { reply in
+            row(reply, canReply: state.canReply)
+                .listRowBackground(highlightedReply == reply.stableId ? Color.accentColor.opacity(0.12) : Color.clear)
+                .id(reply.stableId)
         }
-        .alert(actionTitle, isPresented: Binding(
-            get: { [.reported, .reportFailed, .sendFailed, .voteFailed].contains(state?.action ?? .idle) },
-            set: { if !$0 { handle?.value.dismissAction() } }
-        )) {
-            Button("OK", role: .cancel) { handle?.value.dismissAction() }
+        if state.replies.isEmpty {
+            NativeActivityFeedback(
+                status: state.repliesStatus, emptyTitle: "No Replies",
+                retry: { handle?.value.retryReplies() }
+            )
+        } else {
+            NativeActivityPagination(
+                canLoadMore: state.canLoadMore,
+                failed: state.appendFailed,
+                loadMore: { handle?.value.loadMore() },
+                retry: { handle?.value.retryReplies() }
+            )
         }
-        .task {
-            if handle == nil {
-                let thread: IosNativeCommentThread
-                if let openEmbeddedThread {
-                    guard let embeddedThread = openEmbeddedThread() else {
-                        unavailable = true
-                        return
-                    }
-                    thread = embeddedThread
-                } else {
-                    switch location {
-                    case .episode(let subject, let episode):
-                        thread = catalog.openCommentThread(
-                            host: .episode, firstId: subject, secondId: episode, commentId: commentId, replyId: replyId
-                        )
-                    case .person(let person):
-                        thread = catalog.openCommentThread(
-                            host: .person, firstId: person, secondId: 0, commentId: commentId, replyId: replyId
-                        )
-                    case .character(let character):
-                        thread = catalog.openCommentThread(
-                            host: .character, firstId: character, secondId: 0, commentId: commentId, replyId: replyId
-                        )
-                    }
+    }
+
+    private var unavailableContent: some View {
+        NativeActivityFeedback(
+            status: unavailable ? .idle : state?.status,
+            emptyTitle: "Comment Unavailable",
+            retry: { handle?.value.refresh() }
+        )
+    }
+
+    private func scrollToSentReply(_ id: String?, using proxy: ScrollViewProxy) {
+        if scrollAfterSending, let id {
+            scrollAfterSending = false
+            proxy.scrollTo(id, anchor: .bottom)
+        }
+    }
+
+    private func observeThread() async {
+        if handle == nil {
+            let thread: IosNativeCommentThread
+            if let openEmbeddedThread {
+                guard let embeddedThread = openEmbeddedThread() else {
+                    unavailable = true
+                    return
                 }
-                handle = NativeScreenHandle(thread) { $0.close() }
+                thread = embeddedThread
+            } else {
+                switch location {
+                case .episode(let subject, let episode):
+                    thread = catalog.openCommentThread(
+                        host: .episode, firstId: subject, secondId: episode, commentId: commentId, replyId: replyId
+                    )
+                case .person(let person):
+                    thread = catalog.openCommentThread(
+                        host: .person, firstId: person, secondId: 0, commentId: commentId, replyId: replyId
+                    )
+                case .character(let character):
+                    thread = catalog.openCommentThread(
+                        host: .character, firstId: character, secondId: 0, commentId: commentId, replyId: replyId
+                    )
+                }
             }
-            if let current = handle {
-                await observeNative(current.value.observe) { value in
-                    state = value
-                    if value.action == .sent {
-                        draft = ""
-                        replyFocused = false
-                        scrollAfterSending = true
-                        current.value.dismissAction()
-                    }
+            handle = NativeScreenHandle(thread) { $0.close() }
+        }
+        if let current = handle {
+            await observeNative(current.value.observe) { value in
+                state = value
+                if value.action == .sent {
+                    draft = ""
+                    replyFocused = false
+                    scrollAfterSending = true
+                    current.value.dismissAction()
                 }
             }
         }
@@ -423,95 +463,45 @@ struct NativeCommentsSheet: View {
     let location: NativeCommentLocation
     let open: () -> IosNativeComments
 
+    var body: some View {
+        NavigationStack {
+            NativeCommentsContent(catalog: catalog, location: location, open: open)
+        }
+        .presentationDetents([.large])
+    }
+}
+
+struct NativeCommentsContent: View {
+    let catalog: IosNativeCatalog
+    let location: NativeCommentLocation
+    let open: () -> IosNativeComments
+    var inlineScroll: ScrollViewProxy? = nil
+
     @Environment(\.dismiss) private var dismiss
     @State private var handle: NativeScreenHandle<IosNativeComments>?
     @State private var state: IosCommentListState?
     @State private var draft = ""
     @State private var signIn = false
+    @State private var activeThread: String?
     @FocusState private var composerFocused: Bool
 
     var body: some View {
-        NavigationStack {
-            List {
-                if state?.originalCommentsUnavailable == true {
-                    Label("Bangumi Comments Are Temporarily Unavailable", systemImage: "exclamationmark.circle")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                }
-                if let state, !state.comments.isEmpty {
-                    ForEach(state.comments, id: \.stableId) { comment in
-                        NavigationLink(value: comment.stableId) { commentPreview(comment) }
-                    }
-                    NativeActivityPagination(
-                        canLoadMore: state.canLoadMore,
-                        failed: state.appendFailed,
-                        loadMore: { handle?.value.loadMore() },
-                        retry: { handle?.value.retry() }
-                    )
-                } else {
-                    NativeActivityFeedback(
-                        status: state?.status,
-                        emptyTitle: "No Comments",
-                        retry: { handle?.value.retry() }
-                    )
-                }
+        Group {
+            if let inlineScroll {
+                inlineComments(using: inlineScroll)
+            } else {
+                sheetComments
             }
-            .navigationTitle("Comments")
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationDestination(for: String.self) { id in
-                NativeCommentThreadPage(
-                    catalog: catalog,
-                    location: location,
-                    commentId: id,
-                    replyId: nil,
-                    openEmbeddedThread: { handle?.value.openThread(id: id) }
-                )
-            }
-            .refreshable { handle?.value.refresh() }
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
-                }
-                if let url = handle.flatMap({ URL(string: $0.value.originalUrl) }) {
-                    ToolbarItem(placement: .secondaryAction) {
-                        Link("Open in Bangumi", destination: url)
-                    }
-                }
-            }
-            .safeAreaInset(edge: .bottom) {
-                if let state {
-                    HStack(alignment: .bottom) {
-                        if state.signedIn {
-                            TextField("Write a Comment", text: $draft, axis: .vertical)
-                                .lineLimit(1...4)
-                                .focused($composerFocused)
-                                .disabled(state.action == .sending)
-                            Button("Send Comment", systemImage: "arrow.up") { handle?.value.send(text: draft) }
-                                .buttonStyle(.glassProminent)
-                                .labelStyle(.iconOnly)
-                                .disabled(state.action == .sending || draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                        } else {
-                            Button("Sign In to Comment") { signIn = true }
-                                .buttonStyle(.glass)
-                                .frame(maxWidth: .infinity)
-                        }
-                    }
-                    .padding(.horizontal)
-                    .padding(.vertical, 8)
-                    .background(.regularMaterial)
-                }
-            }
-            .alert("Couldn’t Send Comment", isPresented: Binding(
-                get: { state?.action == .sendFailed },
-                set: { if !$0 { handle?.value.dismissAction() } }
-            )) {
-                Button("OK", role: .cancel) {}
-            }
+        }
+        .alert("Couldn’t Send Comment", isPresented: Binding(
+            get: { state?.action == .sendFailed },
+            set: { if !$0 { handle?.value.dismissAction() } }
+        )) {
+            Button("OK", role: .cancel) {}
         }
         .sheet(isPresented: $signIn) {
             NativeAccountPage(catalog: catalog, entry: .email, hasUnreadNotifications: false)
         }
-        .presentationDetents([.large])
         .task {
             let current = handle ?? NativeScreenHandle(open()) { $0.close() }
             handle = current
@@ -526,6 +516,131 @@ struct NativeCommentsSheet: View {
         }
     }
 
+    private var sheetComments: some View {
+        List {
+            commentRows { comment in
+                NavigationLink(value: comment.stableId) { commentPreview(comment) }
+            }
+        }
+        .navigationTitle("Comments")
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(for: String.self) { id in
+            thread(id)
+        }
+        .refreshable { handle?.value.refresh() }
+        .toolbar {
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Done") { dismiss() }
+            }
+            if let url = handle.flatMap({ URL(string: $0.value.originalUrl) }) {
+                ToolbarItem(placement: .secondaryAction) {
+                    Link("Open in Bangumi", destination: url)
+                }
+            }
+        }
+        .safeAreaInset(edge: .bottom) {
+            commentComposer.padding(.horizontal).padding(.vertical, 8).background(.regularMaterial)
+        }
+    }
+
+    private func inlineComments(using proxy: ScrollViewProxy) -> some View {
+        LazyVStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Comments").font(.headline).accessibilityAddTraits(.isHeader)
+                Spacer()
+                if activeThread == nil, let handle {
+                    Menu("Comment Actions", systemImage: "ellipsis.circle") {
+                        Button("Refresh", systemImage: "arrow.clockwise") { handle.value.refresh() }
+                        if let url = URL(string: handle.value.originalUrl) {
+                            Link("Open in Bangumi", destination: url)
+                        }
+                    }
+                    .labelStyle(.iconOnly)
+                }
+            }
+            if let activeThread {
+                Button("Back to Comments", systemImage: "chevron.backward") { self.activeThread = nil }
+                    .font(.subheadline)
+                thread(activeThread)
+            } else {
+                if state != nil {
+                    commentComposer
+                        .padding(10)
+                        .background(Color(uiColor: .secondarySystemBackground), in: RoundedRectangle(cornerRadius: 14))
+                }
+                commentRows { comment in
+                    Button {
+                        composerFocused = false
+                        activeThread = comment.stableId
+                    } label: {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Divider()
+                            commentPreview(comment)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(.rect)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .id("native.playback.comments")
+        .onChange(of: activeThread) { _, _ in proxy.scrollTo("native.playback.comments", anchor: .top) }
+    }
+
+    @ViewBuilder
+    private func commentRows<Row: View>(@ViewBuilder row: @escaping (IosCommentRow) -> Row) -> some View {
+        if state?.originalCommentsUnavailable == true {
+            Label("Bangumi Comments Are Temporarily Unavailable", systemImage: "exclamationmark.circle")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+        }
+        if let state, !state.comments.isEmpty {
+            ForEach(state.comments, id: \.stableId, content: row)
+            NativeActivityPagination(
+                canLoadMore: state.canLoadMore,
+                failed: state.appendFailed,
+                loadMore: { handle?.value.loadMore() },
+                retry: { handle?.value.retry() }
+            )
+        } else {
+            NativeActivityFeedback(status: state?.status, emptyTitle: "No Comments", retry: { handle?.value.retry() })
+        }
+    }
+
+    @ViewBuilder
+    private var commentComposer: some View {
+        if let state {
+            if state.signedIn {
+                HStack(alignment: .bottom) {
+                    TextField("Write a Comment", text: $draft, axis: .vertical)
+                        .lineLimit(1...4)
+                        .focused($composerFocused)
+                        .disabled(state.action == .sending)
+                    Button("Send Comment", systemImage: "arrow.up") { handle?.value.send(text: draft) }
+                        .buttonStyle(.glassProminent)
+                        .labelStyle(.iconOnly)
+                        .disabled(state.action == .sending || draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            } else {
+                Button("Sign In to Comment") { signIn = true }
+                    .buttonStyle(.glass)
+                    .frame(maxWidth: .infinity)
+            }
+        }
+    }
+
+    private func thread(_ id: String) -> some View {
+        NativeCommentThreadPage(
+            catalog: catalog,
+            location: location,
+            commentId: id,
+            replyId: nil,
+            openEmbeddedThread: { handle?.value.openThread(id: id) },
+            inlineScroll: inlineScroll
+        )
+    }
+
     private func commentPreview(_ comment: IosCommentRow) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
@@ -534,7 +649,7 @@ struct NativeCommentsSheet: View {
                 Text(nativeDate(comment.createdAtMillis), format: .dateTime.month().day())
                     .font(.caption).foregroundStyle(.secondary)
             }
-            Text(comment.body).lineLimit(4)
+            Text(comment.body).lineLimit(inlineScroll == nil ? 4 : nil)
             if comment.replyCount == 1 {
                 Text("1 Reply").font(.caption).foregroundStyle(.secondary)
             } else if comment.replyCount > 1 {

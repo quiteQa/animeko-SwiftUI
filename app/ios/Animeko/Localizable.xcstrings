@@ -815,6 +815,28 @@
         }
       }
     },
+    "Back to Comments": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "返回评论"
+          }
+        },
+        "zh-Hant-TW": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "返回留言"
+          }
+        },
+        "zh-Hant-HK": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "返回留言"
+          }
+        }
+      }
+    },
     "Bangumi Comments Are Temporarily Unavailable": {
       "localizations": {
         "zh-Hans": {

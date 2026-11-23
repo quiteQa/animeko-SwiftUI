@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
+import me.him188.ani.app.data.repository.user.SettingsRepository
 import me.him188.ani.app.domain.comment.CommentContext
 import me.him188.ani.app.domain.episode.UnsafeEpisodeSessionApi
 import me.him188.ani.app.domain.media.selector.SelectTrigger
@@ -94,6 +95,7 @@ class IosPlaybackEpisode internal constructor(
     val published: Boolean,
     val watched: Boolean,
     val selected: Boolean,
+    val imageUrl: String?,
 )
 
 class IosPlaybackLine internal constructor(
@@ -108,6 +110,7 @@ class IosNativePlayback internal constructor(
     episodeId: Int,
     context: IosContext,
     private val session: SessionStateProvider,
+    settings: SettingsRepository,
 ) {
     private val screen = IosScreenScope()
     private val viewModel = screen.viewModel { EpisodeViewModel(subjectId, episodeId, context = context) }
@@ -173,11 +176,13 @@ class IosNativePlayback internal constructor(
 
     private val episodes = snapshotFlow {
         val selector = viewModel.episodeSelectorState
-        val current = selector.current?.episodeId
-        selector.items.map { item ->
+        selector.items to selector.current?.episodeId
+    }.combine(settings.uiSettings.flow.map { it.episodeProgress.showEpisodeImages }.distinctUntilChanged()) { (items, current), showImages ->
+        items.map { item ->
             IosPlaybackEpisode(
                 item.episodeId, item.ep, item.title, item.isKnownBroadcast,
                 item.collectionType == UnifiedCollectionType.DONE, item.episodeId == current,
+                item.imageMedium.takeIf { showImages },
             )
         }
     }
