@@ -3,6 +3,7 @@ import application
 
 struct NativeDownloadsPage: View {
     let catalog: IosNativeCatalog
+    let openExplore: () -> Void
 
     @State private var handle: NativeScreenHandle<IosNativeDownloads>?
     @State private var state: IosDownloadsState?
@@ -21,7 +22,11 @@ struct NativeDownloadsPage: View {
         }
         .overlay {
             if let state, !state.isLoading && state.groups.isEmpty {
-                ContentUnavailableView("No Downloads", systemImage: "arrow.down.circle")
+                ContentUnavailableView {
+                    Label("No Downloads", systemImage: "arrow.down.circle")
+                } actions: {
+                    Button("Explore", action: openExplore).buttonStyle(.glass)
+                }
             } else if state?.isLoading != false {
                 ProgressView()
             }
@@ -71,7 +76,7 @@ struct NativeDownloadItem: View {
     let delete: () -> Void
 
     var body: some View {
-        Group {
+        HStack(spacing: 8) {
             if item.canPlay && subjectId > 0 && item.episodeId > 0 {
                 NavigationLink(value: NativeRoute.episode(subjectId: subjectId, episodeId: item.episodeId)) {
                     detail
@@ -79,35 +84,62 @@ struct NativeDownloadItem: View {
             } else {
                 detail
             }
-        }
-        .contextMenu {
-            if !item.isBusy {
-                if item.status == .downloading {
-                    Button("Pause Download", systemImage: "pause", action: pause)
-                } else if item.status == .paused || item.status == .failed {
-                    Button("Resume Download", systemImage: "arrow.clockwise", action: resume)
+            if item.isBusy {
+                ProgressView()
+                    .frame(width: 44, height: 44)
+            } else {
+                Menu {
+                    actions
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                        .font(.title3)
+                        .frame(width: 44, height: 44)
+                        .contentShape(.rect)
                 }
-                Button(role: .destructive, action: delete) { Label("Delete", systemImage: "trash") }
+                .buttonStyle(.borderless)
+                .accessibilityLabel("Download Actions")
             }
         }
+        .contextMenu { if !item.isBusy { actions } }
+    }
+
+    @ViewBuilder
+    private var actions: some View {
+        if item.status == .downloading {
+            Button("Pause Download", systemImage: "pause", action: pause)
+        } else if item.status == .paused || item.status == .failed {
+            Button("Resume Download", systemImage: "arrow.clockwise", action: resume)
+        }
+        Button(role: .destructive, action: delete) { Label("Delete", systemImage: "trash") }
     }
 
     private var detail: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(item.title)
+            Text(item.title).font(.subheadline.weight(.semibold))
             if item.status == .downloading || item.status == .paused {
                 ProgressView(value: item.progress)
             }
-            switch item.status {
-            case .paused:
-                Text("Paused").font(.footnote).foregroundStyle(.secondary)
-            case .failed:
-                Text("Failed").font(.footnote).foregroundStyle(.secondary)
-            case .completed:
-                Text("Completed").font(.footnote).foregroundStyle(.secondary)
-            default:
-                EmptyView()
+            HStack {
+                statusLabel
+                if item.status == .downloading || item.status == .paused {
+                    Spacer(minLength: 5)
+                    Text(item.progress, format: .percent.precision(.fractionLength(0))).monospacedDigit()
+                }
             }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private var statusLabel: some View {
+        switch item.status {
+        case .downloading: Label("Downloading", systemImage: "arrow.down.circle")
+        case .paused: Label("Paused", systemImage: "pause.circle")
+        case .failed: Label("Failed", systemImage: "exclamationmark.circle").foregroundStyle(Color.red)
+        case .completed: Label("Completed", systemImage: "checkmark.circle")
+        default: EmptyView()
         }
     }
 }

@@ -57,8 +57,10 @@ import me.him188.ani.app.data.repository.user.UserRepository
 import me.him188.ani.app.domain.notification.NotificationBadgeManager
 import me.him188.ani.app.domain.search.SubjectSearchQuery
 import me.him188.ani.app.domain.session.auth.OAuthPlatform
+import me.him188.ani.app.domain.session.InvalidSessionReason
 import me.him188.ani.app.domain.session.SessionState
 import me.him188.ani.app.domain.session.SessionStateProvider
+import me.him188.ani.app.ui.rating.RateRequest
 import me.him188.ani.app.navigation.EpisodeNavigationGuardRegistry
 import me.him188.ani.app.platform.IosContext
 import me.him188.ani.app.ui.exploration.schedule.AiringScheduleColumnItem
@@ -109,6 +111,7 @@ class IosCatalogState internal constructor(
     val status: IosLoadStatus,
     val canLoadMore: Boolean = false,
     val appendFailed: Boolean = false,
+    val requiresSignIn: Boolean = false,
 )
 
 internal data class IosPage<T : Any>(
@@ -241,6 +244,7 @@ class IosSubjectCollectionState internal constructor(
 class IosNativeCollections internal constructor(
     repository: SubjectCollectionRepository,
     settings: SettingsRepository,
+    session: SessionStateProvider,
 ) {
     private val screen = IosScreenScope()
     private val filter = MutableStateFlow(IosCollectionFilter.WATCHING)
@@ -257,7 +261,15 @@ class IosNativeCollections internal constructor(
         },
     ) { item -> item }
 
-    fun observe(onValue: (IosCatalogState) -> Unit): IosObservation = screen.coroutineScope.observe(paging.state, onValue)
+    private val state = combine(paging.state, session.stateFlow) { page, account ->
+        if (page.subjects.isEmpty() && account is SessionState.Invalid && account.reason == InvalidSessionReason.NO_TOKEN) {
+            IosCatalogState(emptyList(), IosLoadStatus.IDLE, requiresSignIn = true)
+        } else {
+            page
+        }
+    }
+
+    fun observe(onValue: (IosCatalogState) -> Unit): IosObservation = screen.coroutineScope.observe(state, onValue)
     fun select(filter: IosCollectionFilter) { this.filter.value = filter }
     fun loadMore() = paging.loadMore()
     fun retry() { paging.retry() }
@@ -349,6 +361,17 @@ class IosEpisodeRow internal constructor(
     val canPlay: Boolean,
     val watched: Boolean,
     val imageUrl: String?,
+    val progress: Double,
+)
+
+class IosSubjectRating internal constructor(
+    val communityScore: Double,
+    val score: Int,
+    val comment: String,
+    val isPrivate: Boolean,
+    val canEdit: Boolean,
+    val showEditor: Boolean,
+    val saving: Boolean,
 )
 
 class IosSubjectState internal constructor(
@@ -359,6 +382,11 @@ class IosSubjectState internal constructor(
     val episodesLoading: Boolean = false,
     val staff: List<IosPersonReference> = emptyList(),
     val characters: List<IosPersonReference> = emptyList(),
+    val rating: IosSubjectRating? = null,
+    val moreStaff: Boolean = false,
+    val moreCharacters: Boolean = false,
+    val staffAppendFailed: Boolean = false,
+    val charactersAppendFailed: Boolean = false,
 )
 
 class IosNativeSubject internal constructor(
@@ -421,6 +449,7 @@ class IosNativeSubject internal constructor(
                             episode.isBroadcast,
                             episode.collectionType == UnifiedCollectionType.DONE,
                             episode.imageMedium.takeIf { episodes.showEpisodeImages },
+                            if (episode.isDoneOrDropped) 0.0 else episode.playProgress?.toDouble() ?: 0.0,
                         )
                     },
                     if (detail.isPlaceholder && info == null) IosLoadStatus.LOADING else IosLoadStatus.READY,
@@ -433,6 +462,17 @@ class IosNativeSubject internal constructor(
                         val character = item.character
                         IosPersonReference(character.id, character.displayName, character.imageMedium, true)
                     }.distinctBy { it.id },
+                    rating = detail.rating.let { rating ->
+                        IosSubjectRating(
+                            rating.ratingInfo.scoreFloat.toDouble(), rating.selfRatingInfo.score,
+                            rating.selfRatingInfo.comment.orEmpty(), rating.selfRatingInfo.isPrivate,
+                            rating.enableEdit, rating.showRatingDialog, rating.isUpdating,
+                        )
+                    },
+                    moreStaff = staffPage.canLoadMore,
+                    moreCharacters = characterPage.canLoadMore,
+                    staffAppendFailed = staffPage.appendFailed,
+                    charactersAppendFailed = characterPage.appendFailed,
                 )
             }
         }
@@ -445,6 +485,20 @@ class IosNativeSubject internal constructor(
     fun observe(onValue: (IosSubjectState) -> Unit): IosObservation = screen.coroutineScope.observe(state, onValue)
     fun observeCollection(onValue: (IosSubjectCollectionState) -> Unit): IosObservation =
         screen.coroutineScope.observe(collectionState, onValue)
+
+    fun openRating() { (viewModel.state.value as? SubjectDetailsLoadState.Ok)?.value?.requestEditRating() }
+    fun closeRating() { (viewModel.state.value as? SubjectDetailsLoadState.Ok)?.value?.cancelEditRating() }
+    fun saveRating(score: Int, review: String, privateRating: Boolean) {
+        val details = (viewModel.state.value as? SubjectDetailsLoadState.Ok)?.value ?: return
+        if (score in 0..10 && details.uiState.value.rating.enableEdit && !details.uiState.value.rating.isUpdating) {
+            details.submitRating(RateRequest(score, review.trim(), privateRating))
+        }
+    }
+
+    fun loadMoreStaff() = staff.loadMore()
+    fun retryStaff() = staff.retry()
+    fun loadMoreCharacters() = characters.loadMore()
+    fun retryCharacters() = characters.retry()
 
     fun setCollection(filter: IosCollectionFilter?) {
         val details = (viewModel.state.value as? SubjectDetailsLoadState.Ok)?.value ?: return
@@ -504,7 +558,7 @@ class IosNativeCatalog internal constructor(private val context: IosContext, pri
     fun openRankings() = IosNativeRankings()
     fun openSchedule() = IosNativeSchedule(settings)
     fun openSearch() = IosNativeSearch()
-    fun openCollections() = IosNativeCollections(koin.get(), settings)
+    fun openCollections() = IosNativeCollections(koin.get(), settings, koin.get())
     fun openDownloads() = IosNativeDownloads()
     fun openSubjectDownloads(subjectId: Int) = IosNativeSubjectDownloads(subjectId, koin.get(), settings, koin.get(), context)
     fun openSettings() = nativeSettings

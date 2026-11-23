@@ -20,6 +20,19 @@ struct NativeSettingsPage: View {
         let settings = catalog.openSettings()
         NavigationStack {
             Form {
+                Section {
+                    NavigationLink(value: NativeSettingsRoute.playback) {
+                        Label("Playback", systemImage: "play.rectangle")
+                    }
+                    .accessibilityIdentifier("native.settings.playback")
+                    NavigationLink(value: NativeSettingsRoute.mediaSources) {
+                        Label("Media Sources", systemImage: "point.3.connected.trianglepath.dotted")
+                    }
+                    .accessibilityIdentifier("native.settings.sources")
+                    NavigationLink(value: NativeSettingsRoute.notifications) {
+                        Label("Notifications", systemImage: "bell")
+                    }
+                }
                 Section("Appearance") {
                     Picker("Theme", selection: $appearance) {
                         Text("System").tag(IosAppearance.system)
@@ -57,17 +70,6 @@ struct NativeSettingsPage: View {
                     }
                 }
                 Section {
-                    NavigationLink(value: NativeSettingsRoute.playback) {
-                        Label("Playback", systemImage: "play.rectangle")
-                    }
-                    .accessibilityIdentifier("native.settings.playback")
-                    NavigationLink(value: NativeSettingsRoute.mediaSources) {
-                        Label("Media Sources", systemImage: "point.3.connected.trianglepath.dotted")
-                    }
-                    .accessibilityIdentifier("native.settings.sources")
-                    NavigationLink(value: NativeSettingsRoute.notifications) {
-                        Label("Notifications", systemImage: "bell")
-                    }
                     NavigationLink(value: NativeSettingsRoute.about) {
                         Label("About Animeko", systemImage: "info.circle")
                     }
@@ -95,7 +97,7 @@ struct NativeSettingsPage: View {
                 }
             }
         }
-        .presentationDetents([.medium, .large])
+        .presentationDetents([.large])
         .task { await observeNative(settings.observe) { state = $0 } }
     }
 }

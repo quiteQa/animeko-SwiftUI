@@ -347,54 +347,77 @@ private struct NativePlaybackEpisodeCard: View {
     let select: () -> Void
 
     var body: some View {
-        let shape = RoundedRectangle(cornerRadius: 14)
         Button(action: select) {
-            VStack(alignment: .leading, spacing: 0) {
-                Color.secondary.opacity(0.12)
-                    .aspectRatio(16.0 / 9.0, contentMode: .fit)
-                    .overlay {
-                        AsyncImage(url: episode.imageUrl.flatMap { URL(string: $0) }) { phase in
-                            if let image = phase.image {
-                                image.resizable().scaledToFill()
-                            } else {
-                                Image(systemName: "film").font(.title3).foregroundStyle(.secondary)
-                            }
-                        }
-                    }
-                    .clipped()
-                    .accessibilityHidden(true)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack(spacing: 4) {
-                        Text(episode.number).font(.caption.monospacedDigit().weight(.semibold))
-                        Spacer(minLength: 0)
-                        if episode.selected {
-                            Image(systemName: "play.fill").accessibilityLabel("Now Playing")
-                        } else if episode.watched {
-                            Image(systemName: "checkmark.circle.fill").accessibilityLabel("Watched")
-                        } else if !episode.published {
-                            Image(systemName: "clock").accessibilityLabel("Episode Unavailable")
-                        }
-                    }
-                    .font(.caption)
-                    .foregroundStyle(episode.selected ? Color.accentColor : Color.secondary)
-                    Text(episode.title.nonEmpty ?? episode.number)
-                        .font(.subheadline.weight(.medium))
-                        .lineLimit(2, reservesSpace: true)
-                        .multilineTextAlignment(.leading)
-                }
-                .padding(10)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(episode.selected ? Color.accentColor.opacity(0.12) : Color(uiColor: .secondarySystemBackground))
-            .clipShape(shape)
-            .overlay { shape.strokeBorder(episode.selected ? Color.accentColor : Color.secondary.opacity(0.18)) }
-            .contentShape(shape)
+            NativeEpisodeCardLabel(
+                number: episode.number, title: episode.title, imageUrl: episode.imageUrl,
+                published: episode.published, watched: episode.watched, selected: episode.selected
+            )
         }
         .buttonStyle(.plain)
         .disabled(!episode.published || episode.selected)
-        .accessibilityElement(children: .combine)
         .accessibilityAddTraits(episode.selected ? .isSelected : [])
+    }
+}
+
+struct NativeEpisodeCardLabel: View {
+    let number: String
+    let title: String
+    let imageUrl: String?
+    let published: Bool
+    let watched: Bool
+    var selected = false
+    var progress = 0.0
+
+    var body: some View {
+        let shape = RoundedRectangle(cornerRadius: 14)
+        VStack(alignment: .leading, spacing: 0) {
+            Color.secondary.opacity(0.12)
+                .aspectRatio(16.0 / 9.0, contentMode: .fit)
+                .overlay {
+                    AsyncImage(url: imageUrl.flatMap { URL(string: $0) }) { phase in
+                        if let image = phase.image {
+                            image.resizable().scaledToFill()
+                        } else {
+                            Image(systemName: "film").font(.title3).foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .clipped()
+                .accessibilityHidden(true)
+                .overlay(alignment: .bottom) {
+                    if progress > 0 && !watched {
+                        ProgressView(value: min(progress, 1))
+                            .accessibilityLabel("Playback Position")
+                    }
+                }
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 4) {
+                    Text(number).font(.caption.monospacedDigit().weight(.semibold))
+                    Spacer(minLength: 0)
+                    if selected {
+                        Image(systemName: "play.fill").accessibilityLabel("Now Playing")
+                    } else if watched {
+                        Image(systemName: "checkmark.circle.fill").accessibilityLabel("Watched")
+                    } else if !published {
+                        Image(systemName: "clock").accessibilityLabel("Episode Unavailable")
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(selected ? Color.accentColor : Color.secondary)
+                Text(title.nonEmpty ?? number)
+                    .font(.subheadline.weight(.medium))
+                    .lineLimit(2, reservesSpace: true)
+                    .multilineTextAlignment(.leading)
+            }
+            .padding(10)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(selected ? Color.accentColor.opacity(0.12) : Color(uiColor: .secondarySystemBackground))
+        .clipShape(shape)
+        .overlay { shape.strokeBorder(selected ? Color.accentColor : Color.secondary.opacity(0.18)) }
+        .contentShape(shape)
+        .accessibilityElement(children: .combine)
     }
 }
 

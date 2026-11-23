@@ -71,10 +71,14 @@ struct NativeAnimekoView: View {
                 stack(.explore) { NativeExplorePage(catalog: catalog) }
             }
             Tab("Collection", systemImage: "star", value: .collection) {
-                stack(.collection) { NativeCollectionPage(catalog: catalog) }
+                stack(.collection) {
+                    NativeCollectionPage(catalog: catalog) { sheet = .account(.email) }
+                }
             }
             Tab("Downloads", systemImage: "arrow.down.circle", value: .downloads) {
-                stack(.downloads) { NativeDownloadsPage(catalog: catalog) }
+                stack(.downloads) {
+                    NativeDownloadsPage(catalog: catalog) { selectedTab.wrappedValue = .explore }
+                }
             }
             Tab(value: .search, role: .search) {
                 stack(.search) { NativeSearchPage(catalog: catalog, query: submittedSearch) }
