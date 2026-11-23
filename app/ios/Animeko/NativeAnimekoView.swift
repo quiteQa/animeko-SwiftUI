@@ -218,7 +218,7 @@ private struct NativeTabStack<Content: View>: View {
         self.openAccount = openAccount
         self.openUpdateSettings = openUpdateSettings
         self.content = content()
-        _savedPath = SceneStorage(wrappedValue: nil, "native.path.\(tab.rawValue)")
+        _savedPath = SceneStorage("native.path.\(tab.rawValue)")
     }
 
     var body: some View {
